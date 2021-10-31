@@ -1,12 +1,12 @@
+#include "display.hpp"
 #include <iostream>
 #include <algorithm>
-#include <array>
 
 constexpr std::uint16_t MEMORY_SIZE = 4096;
 constexpr std::uint8_t STACK_SIZE = 16;
 constexpr std::uint8_t REGISTER_COUNT = 16;
 constexpr std::uint8_t KEY_COUNT = 16;
-constexpr std::uint16_t DISPLAY_SIZE = 16 * 32;
+
 
 class Chip8
 {
@@ -20,9 +20,8 @@ private:
 	std::uint8_t delay_timer = 0;
 	std::uint8_t sound_timer = 0;
 	std::array <uint8_t, KEY_COUNT> keys;
-	std::array <uint8_t, DISPLAY_SIZE> display;
 
 public:
-	Chip8();
+	Chip8(Display &display);
 	virtual ~Chip8();
 };

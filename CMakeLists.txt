@@ -6,7 +6,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 project(chip8)
-add_executable(chip8 main.cpp chip8.cpp)
+add_executable(chip8 main.cpp chip8.cpp display.cpp)
 
 find_package(Threads REQUIRED)
-target_link_libraries(chip8 Threads::Threads)
+find_package(SDL2 REQUIRED)
+target_link_libraries(chip8 PRIVATE SDL2::SDL2 SDL2::SDL2main Threads::Threads)

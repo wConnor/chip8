@@ -2,7 +2,8 @@
 
 int main(int argc, char *argv[])
 {
-	Chip8 *chip = new Chip8();
+	Display display;
+	Chip8 *chip = new Chip8(display);
 
 	return 0;
 }
