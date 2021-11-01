@@ -7,8 +7,8 @@ Chip8::Chip8(Display &display) {
 	std::fill(V.begin(), V.end(), 0x0);
 	std::fill(stack.begin(), stack.end(), 0x0);
 
-	memory[pc] = 0x86;
-	memory[pc + 1] = 0x3E;
+	memory[pc] = 0x73;
+	memory[pc + 1] = 0xA2;
 
 	std::srand(std::time(nullptr));
 
@@ -20,31 +20,92 @@ Chip8::Chip8(Display &display) {
 
 	std::uint16_t op_code = (memory[pc] << 8) | memory[pc + 1];
 
-	switch (op_code & 0xF000) {
-	case 0x1000:
+	switch (op_code & 0xF000u) {
+	case 0x0000:
+		switch (op_code & 0x00FFu) {
+		case 0x00E0: // 00E0: Clears the screen.
+			std::cout << std::hex << "0x" << op_code << ": CLEARING SCREEN." << std::endl;
+			display.clear();
+			break;
+
+		case 0x00EE: // 00EE: Returns from a subroutine.
+			--stack_ptr;
+			pc = stack[stack_ptr];
+			break;
+		}
+		break;
+
+	case 0x1000: // 1NNN: Jumps to address NNN.
+		pc = op_code & 0x0FFFu;
+		std::cout << std::hex << "0x" << op_code << ": JUMPING TO ADDRESS '0x" << pc << "'." << std::endl;
+		break;
+
+	case 0x2000: // 2NNN: Calls subroutine at NNN.
+		stack[stack_ptr] = pc;
+		++stack_ptr;
+		pc = op_code & 0x0FFFu;
+		std::cout << std::hex << "0x" << op_code << ": CALLING SUBROUTINE AT '0x" << pc << "'." << std::endl;
+		break;
+
+	case 0x3000: { // 3XNN: Skips the next instruction if VX equals NN.
+		std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+		std::uint8_t nn = (op_code & 0x00FFu);
+
+		if (V[Vx] == nn) {
+			std::cout << std::hex << "0x" << op_code << ": SKIPPING NEXT INSTRUCTION." << std::endl;
+			pc += 2;
+		}
 
 		break;
-	case 0x2000:
+	}
+
+	case 0x4000: { // 4XNN: Skips the next instruction if VX does not equal NN.
+		std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+		std::uint8_t nn = (op_code & 0x00FFu);
+
+		if (V[Vx] != nn) {
+			std::cout << std::hex << "0x" << op_code << ": SKIPPING NEXT INSTRUCTION." << std::endl;
+			pc += 2;
+		}
 
 		break;
-	case 0x3000:
+	}
+
+	case 0x5000: { // 5XY0: Skips the next instruction if VX equals VY.
+		std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+		std::uint8_t Vy = (op_code & 0x00F0u) >> 4;
+
+		if (V[Vx] == V[Vy]) {
+			std::cout << std::hex << "0x" << op_code << ": SKIPPING NEXT INSTRUCTION." << std::endl;
+			pc += 2;
+		}
 
 		break;
-	case 0x4000:
+	}
+
+	case 0x6000: { // 6XNN: Sets VX to NN.
+		std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+		std::uint8_t nn = (op_code & 0x00FFu);
+
+		std::cout << std::hex << "0x" << op_code << ": SETTING VALUE OF REGISTER '0x" << +Vx << "' TO '" << nn << "." << std::endl;
+		V[Vx] = nn;
 
 		break;
-	case 0x5000:
+	}
+
+	case 0x7000: { // 7XNN: Adds NN to VX.
+		std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+		std::uint8_t nn = (op_code & 0x00FFu);
+
+		std::cout << std::hex << "0x" << op_code << ": ADDING '0x" << +nn << " (" << std::dec << +nn << ")' TO REGISTER '0x" << std::hex << +Vx << "'." << std::endl;
+		V[Vx] += nn;
 
 		break;
-	case 0x6000:
+	}
 
-		break;
-	case 0x7000:
-
-		break;
 	case 0x8000: {
-		std::uint8_t Vx = (op_code & 0x0F00u) >> 8u;
-		std::uint8_t Vy = (op_code & 0x00F0u) >> 4u;
+		std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+		std::uint8_t Vy = (op_code & 0x00F0u) >> 4;
 		switch (op_code & 0x000F) {
 		case 0x0000: // 8XY0: Sets VX to the value of VY.
 			std::cout << std::hex << "0x" << op_code << ": SETTING REGISTER '0x" << +Vx << "' TO VALUE OF '0x" << +Vy << "'." << std::endl;
@@ -109,28 +170,79 @@ Chip8::Chip8(Display &display) {
 			std::cout << std::hex << "0x" << op_code << ": BITSHIFTING REGISTER '0x" << +Vx << "' TO THE LEFT BY 1." << std::endl;
 			V[Vx] <<= 1;
 			break;
+
+		default:
+			std::cerr << "Unsupported opcode." << std::endl;
+			break;
+		}
+	}
+
+	case 0x9000: { // 9XY0: Skips the next instruction if VX does not equal VY.
+		std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+		std::uint8_t Vy = (op_code & 0x00F0u) >> 4;
+
+		if (V[Vx] != V[Vy]) {
+			std::cout << std::hex << "0x" << op_code << ": SKIPPING NEXT INSTRUCTION." << std::endl;
+			pc += 2;
 		}
 
 		break;
 	}
-	case 0x9000:
+
+	case 0xA000: { // ANNN: Sets I to the address NNN.
+		std::uint8_t nnn = (op_code & 0x0FFFu);
+		std::cout << std::hex << "0x" << op_code << ": SETTING I TO '" << +nnn << "'." << std::endl;
+		I = nnn;
+		break;
+	}
+
+	case 0xB000: { // BNNN: Jumps to the address NNN plus V0.
+		std::uint8_t nnn = (op_code & 0x0FFFu);
+		pc = nnn + V[0];
+		std::cout << std::hex << "0x" << op_code << ": JUMPING TO ADDRESS '" << +pc << "'." << std::endl;
+		break;
+	}
+
+	case 0xC000: { // CXNN: Sets VX to the result of a bitwise and operation on a random number (Typically: 0 to 255) and NN.
+		std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+		std::uint8_t nn = (op_code & 0x00FFu);
+		std::uint8_t number = std::rand() % UINT8_MAX;
+
+		V[Vx] = nn & number;
+		std::cout << std::hex << "0x" << op_code << ": SETTING REGISTER '0x" << +Vx << "' TO BITWISE AND OF '0x"
+				  << +nn << " (" << std::dec << +nn << ")' AND '0x" << std::hex << +number << "(" << std::dec
+				  << +number << ")'." << std::endl;
+		break;
+	}
+
+	case 0xD000: { // DXYN: Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels. Each row of 8 pixels is read as bit-coded starting from memory location I; I value does not change after the execution of this instruction.
+		std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+		std::uint8_t Vy = (op_code & 0x00F0u) >> 4;
+		std::uint8_t N = (op_code & 0x000Fu);
 
 		break;
-	case 0xA000:
+	}
 
-		break;
-	case 0xB000:
-
-		break;
-	case 0xC000:
-
-		break;
-	case 0xD000:
-
-		break;
 	case 0xE000:
+		switch (op_code & 0x00FF) {
+		case 0x009E: { // EX9E: Skips the next instruction if the key stored in VX is pressed.
+			std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+
+			break;
+		}
+
+		case 0x00A1: { // EXA1: Skips the next instruction if the key stored in VX is not pressed.
+			std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+
+			break;
+		}
+		default:
+			std::cerr << "Unsupported opcode." << std::endl;
+			break;
+		}
 
 		break;
+
 	case 0xF000:
 
 		break;
@@ -139,7 +251,6 @@ Chip8::Chip8(Display &display) {
 		std::cerr << "Unsupported opcode." << std::endl;
 		break;
 	}
-
 }
 
 Chip8::~Chip8() {}
