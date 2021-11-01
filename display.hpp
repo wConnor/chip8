@@ -1,10 +1,13 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_pixels.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_stdinc.h>
+#include <SDL2/SDL_surface.h>
 #include <array>
 #include <iostream>
 
-constexpr std::uint16_t SCREEN_WIDTH = 64 * 10;
-constexpr std::uint16_t SCREEN_HEIGHT = 32 * 10;
-constexpr std::uint8_t PIXEL_SIZE = 8 * 10;
+constexpr std::uint16_t SCREEN_WIDTH = 64;
+constexpr std::uint16_t SCREEN_HEIGHT = 32;
 
 class Display
 {
@@ -13,11 +16,11 @@ private:
 	SDL_Window *win;
 	SDL_Renderer *renderer;
 	SDL_Surface *surface;
+	SDL_Texture *texture;
 
 public:
 	Display();
 	virtual ~Display();
 	void update();
 	void clear();
-	std::array<uint8_t, SCREEN_WIDTH * SCREEN_HEIGHT> get_memory();
 };
