@@ -29,7 +29,6 @@ Display::Display()
 	memory[3] = 1;
 	memory[65] = 1;
 	update();
-	SDL_Delay(2000);
 }
 
 Display::~Display()
