@@ -5,6 +5,7 @@
 #include <map>
 #include <ctime>
 #include <random>
+#include <climits>
 
 constexpr std::uint16_t MEMORY_SIZE = 4096;
 constexpr std::uint8_t STACK_SIZE = 16;
