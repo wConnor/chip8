@@ -6,6 +6,8 @@
 #include <array>
 #include <iostream>
 
+constexpr std::uint16_t WINDOW_WIDTH = 640;
+constexpr std::uint16_t WINDOW_HEIGHT = 320;
 constexpr std::uint16_t SCREEN_WIDTH = 64;
 constexpr std::uint16_t SCREEN_HEIGHT = 32;
 

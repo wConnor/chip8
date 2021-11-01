@@ -8,7 +8,7 @@ Display::Display()
 		std::cerr << "SDL_Init Error: " << SDL_GetError() << std::endl;
 	}
 
-	win = SDL_CreateWindow("CHIP-8", 100, 100, SCREEN_WIDTH * 10, SCREEN_HEIGHT * 10, SDL_WINDOW_SHOWN);
+	win = SDL_CreateWindow("CHIP-8", 100, 100, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
 	if (win == nullptr) {
 		std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
 	}
@@ -28,11 +28,6 @@ Display::Display()
 	memory[2] = 1;
 	memory[3] = 1;
 	memory[65] = 1;
-	update();
-	SDL_Delay(2000);
-
-	std::cout << "Clearing display memory..." << std::endl;
-	clear();
 	update();
 	SDL_Delay(2000);
 }
@@ -57,7 +52,6 @@ void Display::update()
 	}
 
 	SDL_UpdateTexture(texture, nullptr, pixels, SCREEN_WIDTH * sizeof(pixels[0]));
-	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 	SDL_RenderPresent(renderer);
 }
