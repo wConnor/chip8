@@ -8,8 +8,8 @@ Chip8::Chip8(Display &display) {
 	std::fill(V.begin(), V.end(), 0x0);
 	std::fill(stack.begin(), stack.end(), 0x0);
 
-	memory[pc] = 0xDF;
-	memory[pc + 1] = 0xD2;
+	memory[pc] = 0xF5;
+	memory[pc + 1] = 0x55;
 
 	std::srand(std::time(nullptr));
 
@@ -294,7 +294,7 @@ Chip8::Chip8(Display &display) {
 
 		case 0x001E: { // FX1E: Adds VX to I. VF is not affected.
 			std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
-			std::cout << std::hex << "0x" << op_code << ": ADDING VALUE OF '0x" << +Vx << " (0x" << +V[Vx] << ")' TO I (" << +I << ")." << std::endl;			
+			std::cout << std::hex << "0x" << op_code << ": ADDING VALUE OF '0x" << +Vx << " (0x" << +V[Vx] << ")' TO I (" << +I << ")." << std::endl;
 			I += V[Vx];
 
 			break;
@@ -308,21 +308,25 @@ Chip8::Chip8(Display &display) {
 
 			break;
 
-		case 0x0055: // FX55: Stores V0 to VX (including VX) in memory starting at address I. The offset from I is increased by 1 for each value written, but I itself is left unmodified.
-			std::cout << std::hex << "0x" << op_code << ": STORING REGISTER VALUES INTO MEMORY FROM '0x" << +I << "' TO '0x" << I + V.size() << "'." << std::endl;						
+		case 0x0055: { // FX55: Stores V0 to VX (including VX) in memory starting at address I. The offset from I is increased by 1 for each value written, but I itself is left unmodified.
+			std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+			std::cout << std::hex << "0x" << op_code << ": STORING REGISTERS 0x0 -> 0x" << +Vx << " INTO MEMORY FROM '0x" << +I << "' TO '0x" << +(I + Vx) << "'." << std::endl;
 
-			for (int i = 0, it = I; i != V.size(); ++i, ++it)
+			for (int i = 0, it = I; i <= Vx; ++i, ++it)
 				memory[it] = V[i];
 
 			break;
+		}
 
-		case 0x0065: // FX65: Fills V0 to VX (including VX) with values from memory starting at address I. The offset from I is increased by 1 for each value written, but I itself is left unmodified.
-			std::cout << std::hex << "0x" << op_code << ": FILLING REGISTER WITH MEMORY VALUES FROM '0x" << +I << "' TO '0x" << I + V.size() << "'." << std::endl;						
+		case 0x0065: { // FX65: Fills V0 to VX (including VX) with values from memory starting at address I. The offset from I is increased by 1 for each value written, but I itself is left unmodified.
+			std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+			std::cout << std::hex << "0x" << op_code << ": FILLING REGISTERS 0x0 -> 0x" << +Vx << " WITH MEMORY VALUES FROM '0x" << +I << "' TO '0x" << +(I + Vx) << "'." << std::endl;
 
-			for (int i = 0, it = I; i != V.size(); ++i, ++it)
+			for (int i = 0, it = I; i <= Vx; ++i, ++it)
 				V[i] = memory[it];
 
 			break;
+		}
 
 		default:
 			std::cerr << "Unsupported opcode." << std::endl;
