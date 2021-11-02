@@ -15,6 +15,7 @@ class Display
 {
 private:
 	std::array <uint8_t, SCREEN_WIDTH * SCREEN_HEIGHT> memory;
+	std::uint32_t pixels[SCREEN_WIDTH * SCREEN_HEIGHT];
 	SDL_Window *win;
 	SDL_Renderer *renderer;
 	SDL_Surface *surface;
@@ -24,5 +25,6 @@ public:
 	Display();
 	virtual ~Display();
 	void update();
+	void draw(std::uint8_t x, std::uint8_t y, std::uint8_t height);
 	void clear();
 };

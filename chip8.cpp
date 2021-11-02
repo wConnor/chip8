@@ -1,4 +1,5 @@
 #include "chip8.hpp"
+#include <SDL_events.h>
 #include <cstdint>
 
 Chip8::Chip8(Display &display) {
@@ -7,8 +8,8 @@ Chip8::Chip8(Display &display) {
 	std::fill(V.begin(), V.end(), 0x0);
 	std::fill(stack.begin(), stack.end(), 0x0);
 
-	memory[pc] = 0x73;
-	memory[pc + 1] = 0xA2;
+	memory[pc] = 0xDF;
+	memory[pc + 1] = 0xD2;
 
 	std::srand(std::time(nullptr));
 
@@ -220,6 +221,9 @@ Chip8::Chip8(Display &display) {
 		std::uint8_t Vy = (op_code & 0x00F0u) >> 4;
 		std::uint8_t N = (op_code & 0x000Fu);
 
+		std::cout << std::hex << "0x" << op_code << ": DRAWING 8 PIXEL WIDE SPRITE AT '(" << std::dec << +Vx << ',' << +Vy << ")' WITH HEIGHT OF " << +N << "." << std::endl;
+		display.draw(Vx, Vy, N);
+		SDL_Delay(2000);
 		break;
 	}
 
@@ -228,11 +232,27 @@ Chip8::Chip8(Display &display) {
 		case 0x009E: { // EX9E: Skips the next instruction if the key stored in VX is pressed.
 			std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
 
+			SDL_Event event;
+			SDL_PollEvent(&event);
+
+			if (keys[event.key.keysym.sym] == Vx) {
+				std::cout << std::hex << "0x" << op_code << ": SKIPPING NEXT INSTRUCTION AS KEY '" << +Vx << "IS PRESSED." << std::endl;
+				pc += 2;
+			}
+
 			break;
 		}
 
 		case 0x00A1: { // EXA1: Skips the next instruction if the key stored in VX is not pressed.
 			std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+
+			SDL_Event event;
+			SDL_PollEvent(&event);
+
+			if (keys[event.key.keysym.sym] != Vx) {
+				std::cout << std::hex << "0x" << op_code << ": SKIPPING NEXT INSTRUCTION AS KEY '" << +Vx << "IS NOT PRESSED." << std::endl;
+				pc += 2;
+			}
 
 			break;
 		}
@@ -244,6 +264,70 @@ Chip8::Chip8(Display &display) {
 		break;
 
 	case 0xF000:
+		switch (op_code & 0x00FFu) {
+		case 0x0007: { // FX07: Sets VX to the value of the delay timer.
+			std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+			std::cout << std::hex << "0x" << op_code << ": SETTING REGISTER '0x" << +Vx<<  "TO VALUE OF DELAY TIMER (" << +delay_timer << "'." << std::endl;
+
+			break;
+		}
+
+		case 0x000A: // FX0A: A key press is awaited, and then stored in VX. (Blocking Operation. All instruction halted until next key event).
+
+			break;
+
+		case 0x0015: { // FX15: Sets the delay timer to VX.
+			std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+			std::cout << std::hex << "0x" << op_code << ": SETTING DELAY TIMER TO VALUE OF '0x" << +Vx << " (0x" << +V[Vx] << ")'." << std::endl;
+			delay_timer = V[Vx];
+
+			break;
+		}
+
+		case 0x0018: { // FX18: Sets the sound timer to VX.
+			std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+			std::cout << std::hex << "0x" << op_code << ": SETTING SOUND TIMER TO VALUE OF '0x" << +Vx << " (0x" << +V[Vx] << ")'." << std::endl;
+			sound_timer = V[Vx];
+
+			break;
+		}
+
+		case 0x001E: { // FX1E: Adds VX to I. VF is not affected.
+			std::uint8_t Vx = (op_code & 0x0F00u) >> 8;
+			std::cout << std::hex << "0x" << op_code << ": ADDING VALUE OF '0x" << +Vx << " (0x" << +V[Vx] << ")' TO I (" << +I << ")." << std::endl;			
+			I += V[Vx];
+
+			break;
+		}
+
+		case 0x0029: // FX29: Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font.
+
+			break;
+
+		case 0x0033: // FX33: Stores the binary-coded decimal representation of VX, with the most significant of three digits at the address in I, the middle digit at I plus 1, and the least significant digit at I plus 2.
+
+			break;
+
+		case 0x0055: // FX55: Stores V0 to VX (including VX) in memory starting at address I. The offset from I is increased by 1 for each value written, but I itself is left unmodified.
+			std::cout << std::hex << "0x" << op_code << ": STORING REGISTER VALUES INTO MEMORY FROM '0x" << +I << "' TO '0x" << I + V.size() << "'." << std::endl;						
+
+			for (int i = 0, it = I; i != V.size(); ++i, ++it)
+				memory[it] = V[i];
+
+			break;
+
+		case 0x0065: // FX65: Fills V0 to VX (including VX) with values from memory starting at address I. The offset from I is increased by 1 for each value written, but I itself is left unmodified.
+			std::cout << std::hex << "0x" << op_code << ": FILLING REGISTER WITH MEMORY VALUES FROM '0x" << +I << "' TO '0x" << I + V.size() << "'." << std::endl;						
+
+			for (int i = 0, it = I; i != V.size(); ++i, ++it)
+				V[i] = memory[it];
+
+			break;
+
+		default:
+			std::cerr << "Unsupported opcode." << std::endl;
+			break;
+		}
 
 		break;
 

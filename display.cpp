@@ -41,7 +41,6 @@ Display::~Display()
 
 void Display::update()
 {
-	std::uint32_t pixels[SCREEN_WIDTH * SCREEN_HEIGHT];
 	for (int i = 0; i != memory.size(); ++i) {
 		if (memory[i] == 0)  {
 			pixels[i] = 0xFF000000;
@@ -53,6 +52,17 @@ void Display::update()
 	SDL_UpdateTexture(texture, nullptr, pixels, SCREEN_WIDTH * sizeof(pixels[0]));
 	SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 	SDL_RenderPresent(renderer);
+}
+
+void Display::draw(std::uint8_t x, std::uint8_t y, std::uint8_t height)
+{
+	memory[x + y] = 1;
+	for (int i = 0; i != height - 1; ++i) {
+		auto pixel_above = memory[x + y] - SCREEN_HEIGHT;
+		memory[pixel_above] = 1;
+	}
+
+	update();
 }
 
 void Display::clear()
